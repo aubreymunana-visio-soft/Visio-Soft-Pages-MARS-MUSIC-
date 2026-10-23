@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MARS Music Search</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#fff;font-family:Arial,sans-serif;padding:12px}
+.search-wrap{position:sticky;top:0;z-index:10;background:#000;padding:12px 0}
+.search-box{width:100%;max-width:500px;margin:0 auto;display:flex;align-items:center;background:#111;border:1px solid #333;border-radius:25px;padding:12px 16px}
+.search-box input{flex:1;background:transparent;border:none;color:white;outline:none;font-size:16px}
+.search-box input::placeholder{color:#777}
+.song-grid{max-width:600px;margin:10px auto}
+.song-card{background:#111;border:1px solid #222;border-radius:12px;padding:12px;margin:10px 0;display:flex;gap:12px;align-items:center}
+.song-card img{width:60px;height:60px;border-radius:8px;object-fit:cover}
+.song-title{font-weight:bold}
+.song-artist{color:#888;font-size:11px}
+.download-btn{background:orange;color:black;text-decoration:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:bold}
+#popupOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:100;justify-content:center;align-items:center;padding:15px}
+#popupOverlay.active{display:flex}
+.popup{background:#151515;border:1px solid #444;border-radius:16px;padding:18px;max-width:360px;width:100%;text-align:center;position:relative}
+.popup img{width:200px;height:200px;border-radius:12px;margin-bottom:12px}
+.close-btn{position:absolute;top:10px;right:12px;background:#222;border:1px solid #444;color:white;width:32px;height:32px;border-radius:50%;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <span>🔍</span>
+    <input type="text" id="searchInput" placeholder="music search" oninput="handleSearch()">
+  </div>
+</div>
+
+<div class="song-grid" id="songGrid"></div>
+<p id="noResult" style="color:#666;text-align:center;display:none">No songs found</p>
+
+<div id="popupOverlay">
+  <div class="popup">
+    <button class="close-btn" onclick="closePopup()">✕</button>
+    <img id="popArt" src="" alt="">
+    <h3 id="popTitle"></h3>
+    <p>Glaxy - KAKA EP</p>
+    <audio id="popAudio" controls></audio>
+    <a id="popDownload" class="download-btn" href="" download="" style="display:block;width:100%;padding:12px;margin-top:10px">⬇ Download</a>
+  </div>
+</div>
+
+<script>
+const songs = [
+  { title: "Ambuye", file: "audios/EP/glaxy/KAKA ep Glaxy mw/Ambuye GLaxy [KAKA EP] prod by Glaxy Mars]@26.mp3", downloadName: "Ambuye - Glaxy [KAKA EP][marsmusic.com].mp3", art: "audios/EP/glaxy/KAKA ep Glaxy mw/GLAXY_KAKA_EP_ART.jpg" },
+  { title: "Kaka", file: "audios/EP/glaxy/KAKA ep Glaxy mw/KAKA GLaxy [KAKA EP] prod by Glaxy Mars]@26.mp3", downloadName: "Kaka - Glaxy [KAKA EP][marsmusic.com].mp3", art: "audios/EP/glaxy/KAKA ep Glaxy mw/GLAXY_KAKA_EP_ART.jpg" },
+  { title: "Limbikilabe", file: "audios/EP/glaxy/KAKA ep Glaxy mw/Limbikilabe GLaxy [KAKA EP] prod by Glaxy Mars]@26.mp3", downloadName: "Limbikilabe - Glaxy [KAKA EP][marsmusic.com].mp3", art: "audios/EP/glaxy/KAKA ep Glaxy mw/GLAXY_KAKA_EP_ART.jpg" },
+  { title: "Ndiwe", file: "audios/EP/glaxy/KAKA ep Glaxy mw/Ndiwe GLaxy [KAKA  EP] prod by Glaxy Mars]@26.mp3", downloadName: "Ndiwe - Glaxy [KAKA EP][marsmusic.com].mp3", art: "audios/EP/glaxy/KAKA ep Glaxy mw/GLAXY_KAKA_EP_ART.jpg" }
+];
+const grid=document.getElementById('songGrid');
+const noResult=document.getElementById('noResult');
+function renderSongs(list){
+  grid.innerHTML="";
+  if(list.length===0){noResult.style.display="block";return;}
+  noResult.style.display="none";
+  list.forEach(s=>{
+    const div=document.createElement('div');
+    div.className="song-card";
+    div.innerHTML=`<img src="${s.art}" onclick='openPopupByTitle("${s.title}")'><div style="flex:1" onclick='openPopupByTitle("${s.title}")'><div class="song-title">${s.title}</div><div class="song-artist">Glaxy</div></div><div style="display:flex;flex-direction:column;gap:6px"><audio controls src="${s.file}"></audio><a class="download-btn" href="${s.file}" download="${s.downloadName}">⬇ Download</a></div>`;
+    grid.appendChild(div);
+  });
+  document.querySelectorAll('audio').forEach(a=>{a.addEventListener('play',()=>{document.querySelectorAll('audio').forEach(o=>{if(o!==a)o.pause();});});});
+}
+function handleSearch(){
+  const q=document.getElementById('searchInput').value.toLowerCase().trim();
+  if(q===""){renderSongs(songs);closePopup();return;}
+  const filtered=songs.filter(s=>s.title.toLowerCase().includes(q));
+  renderSongs(filtered);
+  if(filtered.length>0)openPopup(filtered[0]);else closePopup();
+}
+function openPopupByTitle(t){openPopup(songs.find(s=>s.title===t));}
+function openPopup(song){
+  document.getElementById('popArt').src=song.art;
+  document.getElementById('popTitle').innerText=song.title;
+  document.getElementById('popAudio').src=song.file;
+  document.getElementById('popDownload').href=song.file;
+  document.getElementById('popDownload').download=song.downloadName;
+  document.getElementById('popDownload').innerText="⬇ Download "+song.title;
+  document.getElementById('popupOverlay').classList.add('active');
+  document.querySelectorAll('audio').forEach(a=>{if(a.id!=='popAudio')a.pause();});
+}
+function closePopup(){document.getElementById('popupOverlay').classList.remove('active');document.getElementById('popAudio').pause();}
+renderSongs(songs);
+</script>
+</body>
+</html>
+ 
